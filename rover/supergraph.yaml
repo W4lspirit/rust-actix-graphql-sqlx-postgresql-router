@@ -1,0 +1,9 @@
+subgraphs:
+  skills:
+    routing_url: http://localhost:8081
+    schema:
+      subgraph_url: http://localhost:8081
+  coder:
+    routing_url: http://localhost:8080
+    schema:
+      subgraph_url: http://localhost:8080

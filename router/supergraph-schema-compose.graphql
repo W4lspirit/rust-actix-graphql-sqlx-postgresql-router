@@ -1,0 +1,92 @@
+
+schema
+  @core(feature: "https://specs.apollo.dev/core/v0.2"),
+  @core(feature: "https://specs.apollo.dev/join/v0.1", for: EXECUTION)
+{
+  query: Query
+  mutation: Mutation
+}
+
+directive @core(as: String, feature: String!, for: core__Purpose) repeatable on SCHEMA
+
+directive @join__field(graph: join__Graph, provides: join__FieldSet, requires: join__FieldSet) on FIELD_DEFINITION
+
+directive @join__graph(name: String!, url: String!) on ENUM_VALUE
+
+directive @join__owner(graph: join__Graph!) on INTERFACE | OBJECT
+
+directive @join__type(graph: join__Graph!, key: join__FieldSet) repeatable on INTERFACE | OBJECT
+
+type Coder
+  @join__owner(graph: CODER)
+  @join__type(graph: CODER, key: "id")
+  @join__type(graph: SKILLS, key: "id")
+{
+  createdAt: DateTime! @join__field(graph: CODER)
+  description: String! @join__field(graph: CODER)
+  id: UUID! @join__field(graph: CODER)
+  name: String! @join__field(graph: CODER)
+  skills: [Skill!]! @join__field(graph: SKILLS)
+}
+
+"""
+Implement the DateTime<Utc> scalar
+
+The input/output is a string in RFC3339 format.
+"""
+scalar DateTime
+
+type Mutation {
+  createCoder(description: String!, title: String!): Coder! @join__field(graph: CODER)
+  createSkill(coderId: String!, description: String!, title: String!): Skill! @join__field(graph: SKILLS)
+  deleteCoder(id: ID!): Boolean! @join__field(graph: CODER)
+  deleteSkill(id: ID!): Boolean! @join__field(graph: SKILLS)
+  updateCoder(description: String!, id: ID!): Coder! @join__field(graph: CODER)
+  updateSkill(description: String!, id: ID!): Skill! @join__field(graph: SKILLS)
+}
+
+type Query {
+  coder(id: String!): Coder! @join__field(graph: CODER)
+  coders: [Coder!]! @join__field(graph: CODER)
+  skill(id: String!): Skill! @join__field(graph: SKILLS)
+  skills: [Skill!]! @join__field(graph: SKILLS)
+}
+
+type Skill {
+  coderId: UUID!
+  createdAt: DateTime!
+  description: String!
+  id: UUID!
+  title: String!
+}
+
+"""
+A UUID is a unique 128-bit number, stored as 16 octets. UUIDs are parsed as Strings
+within GraphQL. UUIDs are used to assign unique identifiers to entities without requiring a central
+allocating authority.
+
+# References
+
+* [Wikipedia: Universally Unique Identifier](http://en.wikipedia.org/wiki/Universally_unique_identifier)
+* [RFC4122: A Universally Unique IDentifier (UUID) URN Namespace](http://tools.ietf.org/html/rfc4122)
+"""
+scalar UUID
+
+enum core__Purpose {
+  """
+  `EXECUTION` features provide metadata necessary to for operation execution.
+  """
+  EXECUTION
+
+  """
+  `SECURITY` features provide metadata necessary to securely resolve fields.
+  """
+  SECURITY
+}
+
+scalar join__FieldSet
+
+enum join__Graph {
+  CODER @join__graph(name: "coder" url: "http://localhost:8080")
+  SKILLS @join__graph(name: "skills" url: "http://localhost:8081")
+}
